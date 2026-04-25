@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <title>두더지 게임!</title>
+  <style>
+    :root {
+      --sky:#5BA3DC; --grass:#5A9E2F; --dirt:#8B5E2D;
+      --gold:#F5C842; --red:#E84E0A; --green:#3DB83D;
+    }
+    * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; user-select:none; }
+    html,body { width:100%; height:100%; overflow:hidden; font-family:-apple-system,'Helvetica Neue',sans-serif; }
+
+    /* ── SCREENS ── */
+    .screen { position:fixed; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; }
+    .screen.active { display:flex; }
+
+    /* ── BTN ── */
+    .btn { border:none; border-radius:50px; font-family:inherit; font-weight:700; cursor:pointer; transition:transform .12s; }
+    .btn:active { transform:scale(.93); }
+    .btn-gold { background:var(--gold); color:#2A1000; font-size:20px; padding:15px 44px; box-shadow:0 4px 0 #b8920a,0 6px 18px rgba(0,0,0,.3); }
+    .btn-ghost { background:rgba(255,255,255,.2); color:#fff; font-size:15px; padding:10px 26px; box-shadow:0 3px 0 rgba(0,0,0,.2); }
+    .btn-sm { font-size:15px; padding:11px 26px; }
+
+    /* ══ TITLE ══ */
+    #s-title {
+      background:linear-gradient(180deg,var(--sky) 44%,var(--grass) 44%,var(--grass) 59%,var(--dirt) 59%);
+    }
+    .t-h1 { font-size:50px; font-weight:900; color:#fff; text-shadow:3px 3px 0 #2d7a10,0 0 24px rgba(0,0,0,.35); letter-spacing:-1px; margin-bottom:4px; }
+    .t-sub { font-size:14px; color:rgba(255,255,255,.7); margin-bottom:22px; }
+    .t-char { margin-bottom:26px; }
+
+    /* ══ LEVEL SELECT ══ */
+    #s-levels {
+      background:linear-gradient(180deg,var(--sky) 38%,var(--grass) 38%);
+      padding:28px 14px 20px; justify-content:flex-start; overflow-y:auto;
+    }
+    .lv-h { font-size:26px; font-weight:900; color:#fff; text-shadow:2px 2px 0 rgba(0,0,0,.25); margin-bottom:14px; }
+    .lv-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; width:100%; max-width:360px; }
+    .lv-card {
+      aspect-ratio:1; border:none; border-radius:14px; cursor:pointer; font-family:inherit;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:2px; transition:transform .12s; position:relative; overflow:hidden;
+    }
+    .lv-card:active { transform:scale(.9); }
+    .lv-card.locked { background:#3a3a3a; cursor:default; }
+    .lv-card.locked:active { transform:none; }
+    .lv-n { font-size:24px; font-weight:900; }
+    .lv-name { font-size:10px; font-weight:700; opacity:.85; }
+    .lv-best-txt { font-size:9px; opacity:.7; }
+    .lv-ok { position:absolute; top:4px; right:6px; font-size:12px; }
+    /* 난이도 색상 */
+    .lc1  { background:#6BCB6B; color:#0f3a0f; }
+    .lc2  { background:#4CAF50; color:#0f3a0f; }
+    .lc3  { background:#8BC34A; color:#1a3a00; }
+    .lc4  { background:#CDDC39; color:#2a3a00; }
+    .lc5  { background:#FFC107; color:#3a2a00; }
+    .lc6  { background:#FF9800; color:#3a1a00; }
+    .lc7  { background:#FF5722; color:#fff; }
+    .lc8  { background:#F44336; color:#fff; }
+    .lc9  { background:#E91E63; color:#fff; }
+    .lc10 { background:#9C27B0; color:#fff; }
+    .lc11 { background:linear-gradient(135deg,#FF6B00,#9C27B0); color:#fff; }
+
+    /* ══ COUNTDOWN ══ */
+    #s-countdown { background:rgba(8,3,0,.92); }
+    .cd-n { font-size:130px; font-weight:900; color:var(--gold); text-shadow:0 0 60px rgba(245,200,66,.5); animation:cdp .85s ease-out; }
+    .cd-g { font-size:80px;  font-weight:900; color:#5CB85C; text-shadow:0 0 40px rgba(92,184,92,.6); animation:cdp .85s ease-out; }
+    @keyframes cdp { 0%{transform:scale(2);opacity:0} 30%{transform:scale(1);opacity:1} 80%{transform:scale(1);opacity:1} 100%{transform:scale(.7);opacity:0} }
+
+    /* ══ GAME ══ */
+    #s-game {
+      background:linear-gradient(180deg,var(--sky) 27%,var(--grass) 27%,var(--grass) 43%,var(--dirt) 43%);
+      padding:0 11px 11px; justify-content:flex-start;
+    }
+    .hud { width:100%; max-width:420px; display:flex; align-items:center; gap:8px; padding:10px 3px 5px; }
+    .hud-lv { background:rgba(0,0,0,.25); color:#fff; font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; white-space:nowrap; }
+    .hud-sc { flex:1; text-align:center; font-size:32px; font-weight:900; color:#fff; text-shadow:2px 2px 0 rgba(0,0,0,.3); }
+    .hud-tm { font-size:24px; font-weight:900; color:var(--gold); white-space:nowrap; min-width:50px; text-align:right; }
+
+    .tgt-row { width:100%; max-width:420px; display:flex; align-items:center; gap:8px; margin-bottom:8px; padding:0 3px; }
+    .tgt-lbl { font-size:11px; color:rgba(255,255,255,.75); white-space:nowrap; }
+    .tgt-prog { flex:1; height:9px; background:rgba(255,255,255,.2); border-radius:5px; overflow:hidden; }
+    .tgt-fill { height:100%; background:var(--gold); border-radius:5px; transition:width .25s ease; max-width:100%; }
+    .tgt-fill.done { background:var(--green); }
+
+    .tmr-wrap { width:100%; max-width:420px; height:7px; background:rgba(255,255,255,.2); border-radius:4px; overflow:hidden; margin-bottom:11px; }
+    .tmr-fill { height:100%; background:rgba(255,255,255,.65); border-radius:4px; transition:width 1s linear,background .4s; }
+    .tmr-fill.urg { background:var(--red); }
+
+    /* ── HOLES ── */
+    .hole-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; width:100%; max-width:420px; }
+    .hole-cell { position:relative; aspect-ratio:1; cursor:pointer; }
+
+    .h-ground {
+      position:absolute; bottom:0; left:50%; transform:translateX(-50%);
+      width:96%; height:52%;
+      background:#7A4E22;
+      border-radius:50% 50% 38% 38%;
+      box-shadow:inset 0 -4px 8px rgba(0,0,0,.18), 0 2px 0 #5C3514;
+    }
+    .h-hole {
+      position:absolute; bottom:7px; left:50%; transform:translateX(-50%);
+      width:72%; height:36%;
+      background:radial-gradient(ellipse at center,#080200 20%,#200C00 100%);
+      border-radius:50%;
+      z-index:4;
+      box-shadow:inset 0 3px 12px rgba(0,0,0,1),0 1px 5px rgba(0,0,0,.5);
+    }
+    .h-clip {
+      position:absolute; bottom:18%; left:50%; transform:translateX(-50%);
+      width:65%; height:80%; overflow:hidden; z-index:3;
+    }
+    .mole {
+      width:100%;
+      transform:translateY(115%);
+      transition:transform .24s cubic-bezier(.34,1.56,.64,1);
+      will-change:transform; display:block;
+    }
+    .mole.up   { transform:translateY(0); }
+    .mole.down { transform:translateY(115%); transition:transform .2s ease-in; }
+
+    .h-fx {
+      position:absolute; top:4%; left:50%; transform:translateX(-50%);
+      font-size:24px; z-index:10; pointer-events:none; opacity:0;
+    }
+    .h-fx.show { animation:fxp .48s ease-out forwards; }
+    @keyframes fxp {
+      0%   { opacity:1; transform:translateX(-50%) scale(.5) translateY(0); }
+      100% { opacity:0; transform:translateX(-50%) scale(1.7) translateY(-28px); }
+    }
+
+    /* ══ RESULT ══ */
+    #s-result { background:linear-gradient(160deg,#100600,#200c00); padding:28px 22px; gap:0; }
+    .res-emoji  { font-size:68px; margin-bottom:8px; }
+    .res-status { font-size:30px; font-weight:900; color:var(--gold); margin-bottom:3px; }
+    .res-lv-txt { font-size:13px; color:rgba(255,255,255,.45); margin-bottom:20px; }
+    .res-box    { background:rgba(255,255,255,.07); border-radius:16px; padding:18px 36px; margin-bottom:6px; text-align:center; }
+    .res-box-lbl{ font-size:11px; color:rgba(255,255,255,.4); margin-bottom:3px; }
+    .res-sc-num { font-size:66px; font-weight:900; color:var(--gold); line-height:1; }
+    .res-tgt    { font-size:13px; color:rgba(255,255,255,.45); margin-bottom:4px; }
+    .res-tgt b  { color:var(--gold); }
+    .res-bst    { font-size:12px; color:rgba(255,255,255,.4); margin-bottom:18px; }
+    .res-bst span { color:#fff; font-weight:700; }
+    .res-unlock { background:rgba(61,184,61,.14); border:1px solid rgba(61,184,61,.4); border-radius:10px; padding:9px 16px; font-size:12px; color:#7ddb7d; margin-bottom:18px; text-align:center; }
+    .res-btns   { display:flex; gap:10px; }
+  </style>
+</head>
+<body>
+
+<!-- ══ TITLE ══ -->
+<div id="s-title" class="screen active">
+  <div class="t-h1">두더지 게임!</div>
+  <div class="t-sub">Whack-a-Mole · 11 Levels</div>
+  <div class="t-char">
+    <svg width="128" height="128" viewBox="0 0 100 100">
+      <ellipse cx="50" cy="90" rx="26" ry="9" fill="rgba(0,0,0,.18)"/>
+      <ellipse cx="50" cy="80" rx="24" ry="14" fill="#6B4120"/>
+      <rect x="26" y="55" width="48" height="30" rx="16" fill="#7B5130"/>
+      <ellipse cx="50" cy="46" rx="35" ry="37" fill="#C9975A"/>
+      <ellipse cx="50" cy="54" rx="23" ry="21" fill="#E0B888"/>
+      <circle cx="35" cy="42" r="7" fill="#1a1a2e"/>
+      <circle cx="37.5" cy="39.5" r="2.5" fill="white"/>
+      <circle cx="65" cy="42" r="7" fill="#1a1a2e"/>
+      <circle cx="67.5" cy="39.5" r="2.5" fill="white"/>
+      <circle cx="50" cy="56" r="6.5" fill="#E05252"/>
+      <circle cx="47.5" cy="53.5" r="2" fill="rgba(255,255,255,.42)"/>
+      <circle cx="27" cy="57" r="8" fill="rgba(255,130,130,.28)"/>
+      <circle cx="73" cy="57" r="8" fill="rgba(255,130,130,.28)"/>
+      <path d="M29 33 Q35 29 41 32" stroke="#7B5130" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <path d="M59 32 Q65 29 71 33" stroke="#7B5130" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <button class="btn btn-gold" onclick="showLevels()">게임 시작 🎮</button>
+</div>
+
+<!-- ══ LEVEL SELECT ══ -->
+<div id="s-levels" class="screen">
+  <div class="lv-h">난이도 선택</div>
+  <div class="lv-grid" id="lv-grid"></div>
+  <button class="btn btn-ghost" style="margin-top:16px" onclick="showTitle()">← 처음으로</button>
+</div>
+
+<!-- ══ COUNTDOWN ══ -->
+<div id="s-countdown" class="screen">
+  <div id="cd-el" class="cd-n">3</div>
+</div>
+
+<!-- ══ GAME ══ -->
+<div id="s-game" class="screen">
+  <div class="hud">
+    <div class="hud-lv" id="hud-lv">Lv.1</div>
+    <div class="hud-sc" id="hud-sc">0</div>
+    <div class="hud-tm" id="hud-tm">60</div>
+  </div>
+  <div class="tgt-row">
+    <div class="tgt-lbl" id="tgt-lbl">목표 0점</div>
+    <div class="tgt-prog"><div class="tgt-fill" id="tgt-fill" style="width:0%"></div></div>
+  </div>
+  <div class="tmr-wrap"><div class="tmr-fill" id="tmr-fill" style="width:100%"></div></div>
+  <div class="hole-grid" id="hole-grid"></div>
+</div>
+
+<!-- ══ RESULT ══ -->
+<div id="s-result" class="screen">
+  <div class="res-emoji" id="res-emoji">🎉</div>
+  <div class="res-status" id="res-status">통과!</div>
+  <div class="res-lv-txt" id="res-lv"></div>
+  <div class="res-box">
+    <div class="res-box-lbl">획득 점수</div>
+    <div class="res-sc-num" id="res-sc">0</div>
+  </div>
+  <div class="res-tgt" id="res-tgt">목표: <b>0점</b></div>
+  <div class="res-bst" id="res-bst">최고 기록: <span>0점</span></div>
+  <div class="res-unlock" id="res-unlock" style="display:none"></div>
+  <div class="res-btns">
+    <button class="btn btn-ghost btn-sm" onclick="showLevels()">레벨 선택</button>
+    <button class="btn btn-gold btn-sm" onclick="replayLevel()">다시 도전</button>
+  </div>
+</div>
+
+<script>
+// ── 레벨 설정 ──
+// upT: 두더지 올라와 있는 시간(ms), popT: 내려가는 속도(ms)
+// max: 동시 최대 두더지 수, spawnT: 스폰 간격(ms)
+// pts: 마리당 점수, tgt: 통과 목표 점수
+const CFG = [
+  null,
+  {upT:2400,popT:270,max:1,spawnT:1600,pts:1,tgt:5,  name:'입문' , c:'lc1' },
+  {upT:2100,popT:255,max:1,spawnT:1400,pts:1,tgt:8,  name:'초급' , c:'lc2' },
+  {upT:1800,popT:245,max:1,spawnT:1200,pts:1,tgt:12, name:'초급+', c:'lc3' },
+  {upT:1600,popT:235,max:2,spawnT:1000,pts:1,tgt:16, name:'중급' , c:'lc4' },
+  {upT:1400,popT:225,max:2,spawnT:900, pts:1,tgt:20, name:'중급+', c:'lc5' },
+  {upT:1200,popT:215,max:2,spawnT:800, pts:1,tgt:24, name:'고급' , c:'lc6' },
+  {upT:1000,popT:205,max:3,spawnT:700, pts:2,tgt:20, name:'고급+', c:'lc7' },
+  {upT:850, popT:195,max:3,spawnT:620, pts:2,tgt:26, name:'달인' , c:'lc8' },
+  {upT:700, popT:185,max:3,spawnT:550, pts:2,tgt:32, name:'달인+', c:'lc9' },
+  {upT:600, popT:175,max:3,spawnT:480, pts:2,tgt:38, name:'마스터', c:'lc10'},
+  {upT:500, popT:165,max:4,spawnT:400, pts:3,tgt:30, name:'전설' , c:'lc11'},
+];
+const TOTAL = 11, SECS = 60, NHOLES = 9;
+
+// ── 저장 ──
+const store = {
+  d: () => { try { return JSON.parse(localStorage.getItem('mg')||'{}'); } catch { return {}; } },
+  unlocked: () => store.d().u || 1,
+  best: lv => (store.d().b || {})[lv] || 0,
+  setUnlock: lv => { const d=store.d(); if((d.u||1)<lv){d.u=lv; localStorage.setItem('mg',JSON.stringify(d));} },
+  setBest: (lv,sc) => { const d=store.d(); if(!d.b)d.b={}; if((d.b[lv]||0)<sc){d.b[lv]=sc; localStorage.setItem('mg',JSON.stringify(d));} },
+};
+
+// ── 화면 전환 ──
+function showScreen(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function showTitle() { stopAll(); showScreen('s-title'); }
+
+// ── 레벨 선택 ──
+function showLevels() {
+  stopAll();
+  const ul = store.unlocked();
+  const g = document.getElementById('lv-grid');
+  g.innerHTML = '';
+  for (let lv=1; lv<=TOTAL; lv++) {
+    const c = CFG[lv], locked = lv > ul, best = store.best(lv), passed = best >= c.tgt;
+    const btn = document.createElement('button');
+    btn.className = 'lv-card ' + (locked ? 'locked' : c.c);
+    if (locked) {
+      btn.innerHTML = `<span style="font-size:22px">🔒</span><span class="lv-name" style="color:#666">${lv}단계</span>`;
+    } else {
+      btn.innerHTML = `${passed?'<span class="lv-ok">✅</span>':''}
+        <span class="lv-n">${lv}</span>
+        <span class="lv-name">${c.name}</span>
+        ${best>0?`<span class="lv-best-txt">최고 ${best}점</span>`:''}`;
+      btn.addEventListener('click', () => startCountdown(lv));
+    }
+    g.appendChild(btn);
+  }
+  showScreen('s-levels');
+}
+
+// ── 카운트다운 ──
+let curLv = 1;
+function startCountdown(lv) {
+  curLv = lv;
+  showScreen('s-countdown');
+  const el = document.getElementById('cd-el');
+  let n = 3;
+  const tick = () => {
+    el.className=''; void el.offsetWidth;
+    if (n > 0) { el.textContent=n; el.className='cd-n'; n--; setTimeout(tick,900); }
+    else { el.textContent='GO!'; el.className='cd-g'; setTimeout(startGame,800); }
+  };
+  tick();
+}
+
+// ── 게임 상태 ──
+let score=0, timeLeft=SECS, tgtDone=false;
+let states=[], moles=[], fxEls=[], tmrs=[];
+let spawnInt=null, gameInt=null;
+
+// ── 두더지 SVG ──
+function moleSVG() {
+  return `<svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="50" cy="98" rx="25" ry="10" fill="#5C3210"/>
+    <rect x="25" y="58" width="50" height="44" rx="18" fill="#7B5130"/>
+    <ellipse cx="50" cy="48" rx="34" ry="36" fill="#C9975A"/>
+    <ellipse cx="50" cy="56" rx="22" ry="20" fill="#E0B888"/>
+    <circle cx="35" cy="43" r="6.5" fill="#1a1a2e"/>
+    <circle cx="37.5" cy="40.5" r="2.2" fill="white"/>
+    <circle cx="65" cy="43" r="6.5" fill="#1a1a2e"/>
+    <circle cx="67.5" cy="40.5" r="2.2" fill="white"/>
+    <circle cx="50" cy="57" r="6" fill="#E05252"/>
+    <circle cx="47.5" cy="54.5" r="2" fill="rgba(255,255,255,.4)"/>
+    <circle cx="27" cy="58" r="7.5" fill="rgba(255,130,130,.28)"/>
+    <circle cx="73" cy="58" r="7.5" fill="rgba(255,130,130,.28)"/>
+    <path d="M29 33 Q35 29 41 32" stroke="#7B5130" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M59 32 Q65 29 71 33" stroke="#7B5130" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </svg>`;
+}
+
+// ── 그리드 생성 ──
+function buildGrid() {
+  const g = document.getElementById('hole-grid');
+  g.innerHTML=''; states=[]; moles=[]; fxEls=[]; tmrs=Array(NHOLES).fill(null);
+  for (let i=0; i<NHOLES; i++) {
+    const cell = document.createElement('div');
+    cell.className='hole-cell';
+    cell.innerHTML=`<div class="h-ground"></div>
+      <div class="h-clip"><div class="mole" id="m${i}">${moleSVG()}</div></div>
+      <div class="h-hole"></div>
+      <div class="h-fx" id="fx${i}"></div>`;
+    cell.addEventListener('click', ()=>whack(i));
+    cell.addEventListener('touchstart', e=>{e.preventDefault();whack(i);},{passive:false});
+    g.appendChild(cell);
+    states.push('idle');
+    moles.push(document.getElementById(`m${i}`));
+    fxEls.push(document.getElementById(`fx${i}`));
+  }
+}
+
+// ── 게임 시작 ──
+function startGame() {
+  buildGrid();
+  score=0; timeLeft=SECS; tgtDone=false;
+  const c = CFG[curLv];
+  document.getElementById('hud-lv').textContent=`Lv.${curLv} ${c.name}`;
+  document.getElementById('hud-sc').textContent='0';
+  document.getElementById('hud-tm').textContent=SECS;
+  document.getElementById('tmr-fill').style.width='100%';
+  document.getElementById('tmr-fill').classList.remove('urg');
+  document.getElementById('tgt-lbl').textContent=`목표 ${c.tgt}점`;
+  const tf=document.getElementById('tgt-fill');
+  tf.style.width='0%'; tf.classList.remove('done');
+  showScreen('s-game');
+
+  spawnInt = setInterval(()=>{
+    const active = states.filter(s=>s!=='idle').length;
+    if (active >= c.max) return;
+    const idle = states.map((s,i)=>s==='idle'?i:-1).filter(i=>i>=0);
+    if (!idle.length) return;
+    rise(idle[Math.floor(Math.random()*idle.length)]);
+  }, c.spawnT);
+
+  gameInt = setInterval(()=>{
+    timeLeft--;
+    document.getElementById('hud-tm').textContent = timeLeft;
+    document.getElementById('tmr-fill').style.width = (timeLeft/SECS*100)+'%';
+    if (timeLeft<=10) document.getElementById('tmr-fill').classList.add('urg');
+    if (timeLeft<=0) endGame();
+  }, 1000);
+}
+
+// ── 두더지 올리기/내리기 ──
+function rise(i) {
+  if (states[i]!=='idle') return;
+  states[i]='up';
+  moles[i].className='mole';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>moles[i].classList.add('up')));
+  const dur = CFG[curLv].upT + (Math.random()*400-200);
+  tmrs[i] = setTimeout(()=>lower(i), dur);
+}
+function lower(i) {
+  if (states[i]!=='up') return;
+  clearTimeout(tmrs[i]);
+  states[i]='falling';
+  moles[i].classList.remove('up'); moles[i].classList.add('down');
+  setTimeout(()=>{ moles[i].className='mole'; states[i]='idle'; }, CFG[curLv].popT);
+}
+
+// ── 두더지 잡기 ──
+function whack(i) {
+  if (states[i]!=='up') return;
+  clearTimeout(tmrs[i]);
+  states[i]='whacked';
+  moles[i].classList.remove('up'); moles[i].classList.add('down');
+
+  const pts = CFG[curLv].pts;
+  score += pts;
+  document.getElementById('hud-sc').textContent = score;
+
+  // 목표 바 업데이트
+  const c=CFG[curLv], pct=Math.min(score/c.tgt*100,100);
+  const tf=document.getElementById('tgt-fill');
+  tf.style.width=pct+'%';
+  if (score>=c.tgt && !tgtDone) { tgtDone=true; tf.classList.add('done'); }
+
+  // 타격 이펙트
+  const fx=fxEls[i];
+  fx.className='h-fx'; void fx.offsetWidth;
+  fx.textContent = pts>1 ? `+${pts}💥` : '💥';
+  fx.classList.add('show');
+
+  setTimeout(()=>{ moles[i].className='mole'; states[i]='idle'; fx.className='h-fx'; }, 350);
+}
+
+// ── 게임 종료 ──
+function stopAll() {
+  clearInterval(spawnInt); clearInterval(gameInt);
+  tmrs.forEach(t=>clearTimeout(t));
+  spawnInt=gameInt=null;
+}
+function endGame() {
+  stopAll();
+  const c=CFG[curLv], passed=score>=c.tgt;
+  store.setBest(curLv,score);
+  let unlockMsg='';
+  if (passed && curLv<TOTAL) { store.setUnlock(curLv+1); unlockMsg=`🔓 ${curLv+1}단계 (${CFG[curLv+1].name}) 해금!`; }
+  const isLast = curLv===TOTAL;
+  document.getElementById('res-emoji').textContent  = passed?(isLast?'👑':'🎉'):'😢';
+  document.getElementById('res-status').textContent = passed?(isLast?'전설 달성!':'통과!'):'아쉬워요...';
+  document.getElementById('res-lv').textContent     = `${curLv}단계 · ${c.name}`;
+  document.getElementById('res-sc').textContent     = score;
+  document.getElementById('res-tgt').innerHTML      = `목표: <b>${c.tgt}점</b> · ${passed?'✅ 달성!':`${c.tgt-score}점 부족`}`;
+  document.getElementById('res-bst').innerHTML      = `이 레벨 최고 기록: <span>${store.best(curLv)}점</span>`;
+  const ul=document.getElementById('res-unlock');
+  if (unlockMsg){ul.textContent=unlockMsg;ul.style.display='';}else ul.style.display='none';
+  showScreen('s-result');
+}
+function replayLevel() { startCountdown(curLv); }
+</script>
+</body>
+</html>
