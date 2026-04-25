@@ -242,13 +242,16 @@ const CFG = [
 ];
 const TOTAL = 11, SECS = 60, NHOLES = 9;
 
-// ── 저장 ──
+// ── 저장 (인메모리 + localStorage 이중 저장으로 file:// 환경도 동작) ──
+let _db = {};
+try { const s = localStorage.getItem('mg'); if (s) _db = JSON.parse(s); } catch {}
+function _save() { try { localStorage.setItem('mg', JSON.stringify(_db)); } catch {} }
+
 const store = {
-  d: () => { try { return JSON.parse(localStorage.getItem('mg')||'{}'); } catch { return {}; } },
-  unlocked: () => store.d().u || 1,
-  best: lv => (store.d().b || {})[lv] || 0,
-  setUnlock: lv => { const d=store.d(); if((d.u||1)<lv){d.u=lv; localStorage.setItem('mg',JSON.stringify(d));} },
-  setBest: (lv,sc) => { const d=store.d(); if(!d.b)d.b={}; if((d.b[lv]||0)<sc){d.b[lv]=sc; localStorage.setItem('mg',JSON.stringify(d));} },
+  unlocked: ()       => _db.u || 1,
+  best:     lv       => (_db.b || {})[lv] || 0,
+  setUnlock: lv      => { if ((_db.u||1) < lv) { _db.u = lv; _save(); } },
+  setBest:  (lv, sc) => { if (!_db.b) _db.b = {}; if ((_db.b[lv]||0) < sc) { _db.b[lv] = sc; _save(); } },
 };
 
 // ── 화면 전환 ──

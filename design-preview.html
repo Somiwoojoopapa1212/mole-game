@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no"/>
+<title>두더지 디자인 선택</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; user-select:none; }
+  body { background:#2d1a08; font-family:-apple-system,sans-serif; display:flex; flex-direction:column; align-items:center; padding:20px 12px 40px; min-height:100vh; }
+  h1 { color:#f5c842; font-size:22px; font-weight:900; margin-bottom:6px; }
+  .subtitle { color:rgba(255,255,255,.45); font-size:13px; margin-bottom:24px; }
+
+  .designs { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; width:100%; max-width:500px; }
+
+  .card {
+    background:rgba(255,255,255,.07); border-radius:16px;
+    padding:16px 12px; display:flex; flex-direction:column; align-items:center; gap:10px;
+    width:140px; flex-shrink:0;
+  }
+  .card h2 { color:#f5c842; font-size:15px; font-weight:800; }
+  .card p  { color:rgba(255,255,255,.55); font-size:11px; text-align:center; line-height:1.5; }
+
+  /* 구멍 미리보기 */
+  .hole-wrap {
+    position:relative; width:100px; height:110px;
+    cursor:pointer;
+  }
+  .hole-ground {
+    position:absolute; bottom:0; left:50%; transform:translateX(-50%);
+    width:96%; height:50%;
+    background:#7A4E22;
+    border-radius:50% 50% 38% 38%;
+    box-shadow:inset 0 -4px 8px rgba(0,0,0,.18), 0 2px 0 #5C3514;
+  }
+  .hole-dark {
+    position:absolute; bottom:6px; left:50%; transform:translateX(-50%);
+    width:72%; height:36%;
+    background:radial-gradient(ellipse,#080200 20%,#200C00 100%);
+    border-radius:50%;
+    z-index:4;
+    box-shadow:inset 0 3px 12px rgba(0,0,0,1);
+  }
+  .mole-clip {
+    position:absolute; bottom:18%; left:50%; transform:translateX(-50%);
+    width:64%; height:80%; overflow:hidden; z-index:3;
+  }
+  .mole {
+    width:100%; transform:translateY(115%);
+    transition:transform .28s cubic-bezier(.34,1.56,.64,1);
+    display:block;
+  }
+  .mole.up { transform:translateY(0); }
+
+  .pick-btn {
+    padding:10px 20px; background:#f5c842; color:#2A1000;
+    border:none; border-radius:24px; font-size:14px; font-weight:800;
+    cursor:pointer; font-family:inherit; transition:transform .12s;
+    width:100%;
+  }
+  .pick-btn:active { transform:scale(.94); }
+  .pick-btn.selected { background:#3DB83D; color:#fff; }
+
+  .note { color:rgba(255,255,255,.4); font-size:12px; text-align:center; margin-top:18px; line-height:1.7; }
+</style>
+</head>
+<body>
+<h1>🐾 두더지 디자인 선택</h1>
+<p class="subtitle">구멍을 탭하면 두더지가 나옵니다</p>
+
+<div class="designs">
+
+  <!-- ── 디자인 A: 좁고 날렵한 디그다 ── -->
+  <div class="card">
+    <h2>디자인 A</h2>
+    <div class="hole-wrap" onclick="pop('a')">
+      <div class="hole-ground"></div>
+      <div class="mole-clip">
+        <div class="mole" id="mole-a">
+          <svg viewBox="0 0 100 128" xmlns="http://www.w3.org/2000/svg">
+            <!-- 좁고 날렵한 원통형 몸통 -->
+            <path d="M31,128 L31,44 Q31,11 50,11 Q69,11 69,44 L69,128 Z" fill="#9A5E2C"/>
+            <!-- 왼쪽 하이라이트 -->
+            <path d="M34,120 Q33,70 35,40 Q39,18 50,14" stroke="rgba(255,195,110,.22)" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <!-- 오른쪽 그림자 -->
+            <path d="M66,120 Q67,70 65,40 Q61,18 50,14" stroke="rgba(0,0,0,.14)" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <!-- 얼굴 (좁은 타원) -->
+            <ellipse cx="50" cy="72" rx="14" ry="22" fill="#D9AC72"/>
+            <!-- 눈 (작고 가까이) -->
+            <circle cx="43" cy="62" r="4.5" fill="#1a1a2e"/>
+            <circle cx="44.5" cy="60.5" r="1.5" fill="white"/>
+            <circle cx="57" cy="62" r="4.5" fill="#1a1a2e"/>
+            <circle cx="58.5" cy="60.5" r="1.5" fill="white"/>
+            <!-- 코 -->
+            <circle cx="50" cy="75" r="5.5" fill="#E04848"/>
+            <circle cx="47.5" cy="72.5" r="1.8" fill="rgba(255,255,255,.42)"/>
+          </svg>
+        </div>
+      </div>
+      <div class="hole-dark"></div>
+    </div>
+    <p>좁고 날렵<br/>원작에 가까운 비율</p>
+    <button class="pick-btn" id="btn-a" onclick="pick('A')">A 선택</button>
+  </div>
+
+  <!-- ── 디자인 B: 중간 + 표정 풍부 ── -->
+  <div class="card">
+    <h2>디자인 B</h2>
+    <div class="hole-wrap" onclick="pop('b')">
+      <div class="hole-ground"></div>
+      <div class="mole-clip">
+        <div class="mole" id="mole-b">
+          <svg viewBox="0 0 100 128" xmlns="http://www.w3.org/2000/svg">
+            <!-- 중간 너비 원통형 -->
+            <path d="M26,128 L26,43 Q26,10 50,10 Q74,10 74,43 L74,128 Z" fill="#9A5E2C"/>
+            <path d="M29,120 Q28,70 30,42 Q35,17 50,13" stroke="rgba(255,195,110,.22)" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <path d="M71,120 Q72,70 70,42 Q65,17 50,13" stroke="rgba(0,0,0,.13)" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <!-- 얼굴 -->
+            <ellipse cx="50" cy="70" rx="17" ry="25" fill="#D9AC72"/>
+            <!-- 눈썹 (살짝) -->
+            <path d="M40 58 Q44 55 48 57" stroke="#7B4818" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+            <path d="M52 57 Q56 55 60 58" stroke="#7B4818" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+            <!-- 눈 (흰자 보임) -->
+            <circle cx="41" cy="63" r="5.5" fill="#1a1a2e"/>
+            <circle cx="43" cy="61" r="2" fill="white"/>
+            <circle cx="59" cy="63" r="5.5" fill="#1a1a2e"/>
+            <circle cx="61" cy="61" r="2" fill="white"/>
+            <!-- 코 -->
+            <circle cx="50" cy="76" r="6.5" fill="#E04848"/>
+            <circle cx="47.5" cy="73.5" r="2" fill="rgba(255,255,255,.42)"/>
+            <!-- 볼터치 -->
+            <circle cx="30" cy="74" r="8" fill="rgba(255,120,120,.22)"/>
+            <circle cx="70" cy="74" r="8" fill="rgba(255,120,120,.22)"/>
+          </svg>
+        </div>
+      </div>
+      <div class="hole-dark"></div>
+    </div>
+    <p>표정이 풍부<br/>눈썹+볼터치 추가</p>
+    <button class="pick-btn" id="btn-b" onclick="pick('B')">B 선택</button>
+  </div>
+
+  <!-- ── 디자인 C: 통통 귀여운 ── -->
+  <div class="card">
+    <h2>디자인 C</h2>
+    <div class="hole-wrap" onclick="pop('c')">
+      <div class="hole-ground"></div>
+      <div class="mole-clip">
+        <div class="mole" id="mole-c">
+          <svg viewBox="0 0 100 128" xmlns="http://www.w3.org/2000/svg">
+            <!-- 더 넓은 원통형 (통통) -->
+            <path d="M21,128 L21,43 Q21,10 50,10 Q79,10 79,43 L79,128 Z" fill="#9A5E2C"/>
+            <path d="M24,120 Q23,70 25,42 Q31,17 50,13" stroke="rgba(255,195,110,.22)" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <path d="M76,120 Q77,70 75,42 Q69,17 50,13" stroke="rgba(0,0,0,.13)" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <!-- 얼굴 (넓은 타원) -->
+            <ellipse cx="50" cy="70" rx="22" ry="27" fill="#D9AC72"/>
+            <!-- 큰 눈 -->
+            <circle cx="38" cy="60" r="7" fill="#1a1a2e"/>
+            <circle cx="40.5" cy="57.5" r="2.5" fill="white"/>
+            <circle cx="62" cy="60" r="7" fill="#1a1a2e"/>
+            <circle cx="64.5" cy="57.5" r="2.5" fill="white"/>
+            <!-- 큰 코 -->
+            <circle cx="50" cy="75" r="7.5" fill="#E04848"/>
+            <circle cx="47" cy="72" r="2.5" fill="rgba(255,255,255,.42)"/>
+            <!-- 넓은 볼터치 -->
+            <circle cx="25" cy="73" r="11" fill="rgba(255,120,120,.25)"/>
+            <circle cx="75" cy="73" r="11" fill="rgba(255,120,120,.25)"/>
+          </svg>
+        </div>
+      </div>
+      <div class="hole-dark"></div>
+    </div>
+    <p>통통하고 귀여운<br/>큰 눈+큰 코</p>
+    <button class="pick-btn" id="btn-c" onclick="pick('C')">C 선택</button>
+  </div>
+
+</div>
+<p class="note">원하는 디자인을 선택하시면<br/>게임에 바로 적용해드립니다.</p>
+
+<script>
+function pop(id) {
+  const m = document.getElementById('mole-' + id);
+  if (m.classList.contains('up')) { m.classList.remove('up'); return; }
+  m.classList.add('up');
+  setTimeout(() => m.classList.remove('up'), 1400);
+}
+// 자동 순서대로 미리보기
+const order = ['a','b','c'];
+let oi = 0;
+setInterval(() => {
+  const m = document.getElementById('mole-' + order[oi]);
+  m.classList.add('up');
+  setTimeout(() => m.classList.remove('up'), 1200);
+  oi = (oi+1) % 3;
+}, 1600);
+
+function pick(name) {
+  ['a','b','c'].forEach(x => document.getElementById('btn-'+x.toLowerCase()).classList.remove('selected'));
+  document.getElementById('btn-'+name.toLowerCase()).classList.add('selected');
+  alert(`디자인 ${name}을 선택하셨습니다!\n채팅에서 "${name}" 라고 말씀해주시면 게임에 적용해드립니다.`);
+}
+</script>
+</body>
+</html>
