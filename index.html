@@ -4,6 +4,10 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-title" content="두더지 게임"/>
+  <link rel="manifest" href="manifest.json"/>
+  <meta name="theme-color" content="#6B3A18"/>
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png"/>
   <title>두더지 게임!</title>
   <style>
     :root {
@@ -26,7 +30,7 @@
 
     /* ══ TITLE ══ */
     #s-title {
-      background:linear-gradient(180deg,var(--sky) 44%,var(--grass) 44%,var(--grass) 59%,var(--dirt) 59%);
+      background:linear-gradient(180deg,var(--sky) 50%,var(--dirt) 50%);
     }
     .t-h1 { font-size:50px; font-weight:900; color:#fff; text-shadow:3px 3px 0 #2d7a10,0 0 24px rgba(0,0,0,.35); letter-spacing:-1px; margin-bottom:4px; }
     .t-sub { font-size:14px; color:rgba(255,255,255,.7); margin-bottom:22px; }
@@ -34,7 +38,7 @@
 
     /* ══ LEVEL SELECT ══ */
     #s-levels {
-      background:linear-gradient(180deg,var(--sky) 38%,var(--grass) 38%);
+      background:linear-gradient(180deg,var(--sky) 50%,var(--dirt) 50%);
       padding:28px 14px 20px; justify-content:flex-start; overflow-y:auto;
     }
     .lv-h { font-size:26px; font-weight:900; color:#fff; text-shadow:2px 2px 0 rgba(0,0,0,.25); margin-bottom:14px; }
@@ -72,7 +76,7 @@
 
     /* ══ GAME ══ */
     #s-game {
-      background:linear-gradient(180deg,var(--sky) 27%,var(--grass) 27%,var(--grass) 43%,var(--dirt) 43%);
+      background:linear-gradient(180deg,var(--sky) 50%,var(--dirt) 50%);
       padding:0 11px 11px; justify-content:flex-start;
     }
     .hud { width:100%; max-width:420px; display:flex; align-items:center; gap:8px; padding:10px 3px 5px; }
@@ -122,14 +126,32 @@
     .mole.up   { transform:translateY(0); }
     .mole.down { transform:translateY(115%); transition:transform .2s ease-in; }
 
+    /* ── 망치 타격 이펙트 ── */
     .h-fx {
-      position:absolute; top:4%; left:50%; transform:translateX(-50%);
-      font-size:24px; z-index:10; pointer-events:none; opacity:0;
+      position:absolute; top:-5%; left:50%;
+      font-size:30px; z-index:10; pointer-events:none; opacity:0;
+      transform-origin:bottom center;
     }
-    .h-fx.show { animation:fxp .48s ease-out forwards; }
-    @keyframes fxp {
-      0%   { opacity:1; transform:translateX(-50%) scale(.5) translateY(0); }
-      100% { opacity:0; transform:translateX(-50%) scale(1.7) translateY(-28px); }
+    .h-fx.show { animation:hammerSwing .42s ease-out forwards; }
+    @keyframes hammerSwing {
+      0%   { opacity:1; transform:translateX(-50%) rotate(-55deg) translateY(-18px) scale(1.15); }
+      35%  { opacity:1; transform:translateX(-50%) rotate(12deg)  translateY(8px)  scale(1.05); }
+      55%  { opacity:1; transform:translateX(-50%) rotate(8deg)   translateY(5px)  scale(1); }
+      75%  { opacity:.7; transform:translateX(-50%) rotate(8deg)  translateY(5px)  scale(.95); }
+      100% { opacity:0;  transform:translateX(-50%) rotate(8deg)  translateY(5px)  scale(.85); }
+    }
+    /* 임팩트 플래시 */
+    .h-flash {
+      position:absolute; top:15%; left:50%; transform:translateX(-50%) translateY(-50%);
+      width:0; height:0; border-radius:50%;
+      background:radial-gradient(circle, rgba(255,230,50,.9) 0%, rgba(255,180,0,.4) 60%, transparent 100%);
+      z-index:9; pointer-events:none;
+    }
+    .h-flash.show { animation:flashBurst .3s ease-out forwards; }
+    @keyframes flashBurst {
+      0%   { width:0;    height:0;    opacity:1; }
+      50%  { width:70px; height:70px; opacity:.9; transform:translateX(-50%) translateY(-50%); }
+      100% { width:90px; height:90px; opacity:0; transform:translateX(-50%) translateY(-50%); }
     }
 
     /* ══ RESULT ══ */
@@ -300,7 +322,7 @@ function startCountdown(lv) {
 
 // ── 게임 상태 ──
 let score=0, timeLeft=SECS, tgtDone=false;
-let states=[], moles=[], fxEls=[], tmrs=[];
+let states=[], moles=[], fxEls=[], flEls=[], tmrs=[];
 let spawnInt=null, gameInt=null;
 
 // ── 두더지 SVG ──
@@ -326,20 +348,22 @@ function moleSVG() {
 // ── 그리드 생성 ──
 function buildGrid() {
   const g = document.getElementById('hole-grid');
-  g.innerHTML=''; states=[]; moles=[]; fxEls=[]; tmrs=Array(NHOLES).fill(null);
+  g.innerHTML=''; states=[]; moles=[]; fxEls=[]; flEls=[]; tmrs=Array(NHOLES).fill(null);
   for (let i=0; i<NHOLES; i++) {
     const cell = document.createElement('div');
     cell.className='hole-cell';
     cell.innerHTML=`<div class="h-ground"></div>
       <div class="h-clip"><div class="mole" id="m${i}">${moleSVG()}</div></div>
       <div class="h-hole"></div>
-      <div class="h-fx" id="fx${i}"></div>`;
+      <div class="h-flash" id="fl${i}"></div>
+      <div class="h-fx"    id="fx${i}"></div>`;
     cell.addEventListener('click', ()=>whack(i));
     cell.addEventListener('touchstart', e=>{e.preventDefault();whack(i);},{passive:false});
     g.appendChild(cell);
     states.push('idle');
     moles.push(document.getElementById(`m${i}`));
     fxEls.push(document.getElementById(`fx${i}`));
+    flEls.push(document.getElementById(`fl${i}`));
   }
 }
 
@@ -409,13 +433,14 @@ function whack(i) {
   tf.style.width=pct+'%';
   if (score>=c.tgt && !tgtDone) { tgtDone=true; tf.classList.add('done'); }
 
-  // 타격 이펙트
-  const fx=fxEls[i];
-  fx.className='h-fx'; void fx.offsetWidth;
-  fx.textContent = pts>1 ? `+${pts}💥` : '💥';
+  // 망치 타격 이펙트
+  const fx=fxEls[i], fl=flEls[i];
+  fx.className='h-fx'; fl.className='h-flash'; void fx.offsetWidth;
+  fx.textContent = '🔨';
   fx.classList.add('show');
+  fl.classList.add('show');
 
-  setTimeout(()=>{ moles[i].className='mole'; states[i]='idle'; fx.className='h-fx'; }, 350);
+  setTimeout(()=>{ moles[i].className='mole'; states[i]='idle'; fx.className='h-fx'; fl.className='h-flash'; }, 380);
 }
 
 // ── 게임 종료 ──
@@ -442,6 +467,9 @@ function endGame() {
   showScreen('s-result');
 }
 function replayLevel() { startCountdown(curLv); }
+</script>
+<script>
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
 </script>
 </body>
 </html>

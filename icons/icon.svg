@@ -1,0 +1,65 @@
+<!-- 두더지 게임 아이콘: 망치에 맞는 두더지 -->
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="bg-clip"><rect width="200" height="200" rx="36"/></clipPath>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#4FA8E0"/>
+      <stop offset="50%"  stop-color="#5BB8EE"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 배경: 하늘(위) + 흙(아래) -->
+  <rect width="200" height="200" rx="36" fill="url(#sky)"/>
+  <rect y="100" width="200" height="100" fill="#8B5E2D" clip-path="url(#bg-clip)"/>
+
+  <!-- 흙 언덕 -->
+  <ellipse cx="100" cy="180" rx="72" ry="26" fill="#7A4E22"/>
+  <!-- 구멍 -->
+  <ellipse cx="100" cy="174" rx="38" ry="17" fill="#1A0800"/>
+
+  <!-- ── 두더지 몸통 ── -->
+  <path d="M68,175 L68,116 Q68,90 100,90 Q132,90 132,116 L132,175 Z" fill="#6B3A18"/>
+  <!-- 왼쪽 하이라이트 -->
+  <path d="M72,168 Q71,130 74,113 Q82,94 100,93" stroke="rgba(160,80,30,.3)" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <!-- 오른쪽 그림자 -->
+  <path d="M128,168 Q129,130 126,113 Q118,94 100,93" stroke="rgba(0,0,0,.18)" stroke-width="5" fill="none" stroke-linecap="round"/>
+
+  <!-- 눈 (약간 반짝) -->
+  <circle cx="86"  cy="118" r="6.5" fill="#1a1a2e"/>
+  <circle cx="88.5" cy="115.5" r="2.2" fill="white"/>
+  <circle cx="114" cy="118" r="6.5" fill="#1a1a2e"/>
+  <circle cx="116.5" cy="115.5" r="2.2" fill="white"/>
+
+  <!-- 핑크 코 -->
+  <circle cx="100" cy="132" r="9" fill="#F87898"/>
+  <circle cx="97"  cy="129" r="3" fill="rgba(255,255,255,.45)"/>
+
+  <!-- ── 충격 이펙트: 방사선 ── -->
+  <g stroke="#FFD700" stroke-width="3.5" stroke-linecap="round" opacity="0.95">
+    <line x1="100" y1="84" x2="100" y2="68"/>
+    <line x1="112" y1="87" x2="124" y2="74"/>
+    <line x1="88"  y1="87" x2="76"  y2="74"/>
+    <line x1="118" y1="95" x2="135" y2="90"/>
+    <line x1="82"  y1="95" x2="65"  y2="90"/>
+  </g>
+
+  <!-- 충격 점 (스파크) -->
+  <circle cx="100" cy="64" r="5"  fill="#FFD700"/>
+  <circle cx="126" cy="71" r="4"  fill="#FFE040"/>
+  <circle cx="74"  cy="71" r="4"  fill="#FFE040"/>
+  <circle cx="138" cy="88" r="3"  fill="#FFD700"/>
+  <circle cx="62"  cy="88" r="3"  fill="#FFD700"/>
+
+  <!-- ── 망치 ── (impact point: 100,93 / 기울기 -40도) -->
+  <g transform="translate(100,93) rotate(-40)">
+    <!-- 손잡이 (나무) -->
+    <rect x="-6" y="-82" width="13" height="65" rx="5" fill="#9B6030"/>
+    <rect x="-6" y="-82" width="5" height="65" rx="3" fill="rgba(255,200,100,.18)"/>
+    <!-- 망치 머리 (금속) -->
+    <rect x="-26" y="-24" width="54" height="28" rx="9" fill="#555"/>
+    <rect x="-24" y="-22" width="50" height="11" rx="5" fill="rgba(255,255,255,.25)"/>
+    <rect x="-26" y="-24" width="54" height="5"  rx="9" fill="rgba(255,255,255,.12)"/>
+    <!-- 머리 중간 밴드 -->
+    <rect x="-4"  y="-24" width="9"  height="28" fill="rgba(0,0,0,.14)"/>
+  </g>
+</svg>
