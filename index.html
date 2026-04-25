@@ -155,22 +155,23 @@
   <div class="t-h1">두더지 게임!</div>
   <div class="t-sub">Whack-a-Mole · 11 Levels</div>
   <div class="t-char">
-    <svg width="128" height="128" viewBox="0 0 100 100">
-      <ellipse cx="50" cy="90" rx="26" ry="9" fill="rgba(0,0,0,.18)"/>
-      <ellipse cx="50" cy="80" rx="24" ry="14" fill="#6B4120"/>
-      <rect x="26" y="55" width="48" height="30" rx="16" fill="#7B5130"/>
-      <ellipse cx="50" cy="46" rx="35" ry="37" fill="#C9975A"/>
-      <ellipse cx="50" cy="54" rx="23" ry="21" fill="#E0B888"/>
-      <circle cx="35" cy="42" r="7" fill="#1a1a2e"/>
-      <circle cx="37.5" cy="39.5" r="2.5" fill="white"/>
-      <circle cx="65" cy="42" r="7" fill="#1a1a2e"/>
-      <circle cx="67.5" cy="39.5" r="2.5" fill="white"/>
-      <circle cx="50" cy="56" r="6.5" fill="#E05252"/>
-      <circle cx="47.5" cy="53.5" r="2" fill="rgba(255,255,255,.42)"/>
-      <circle cx="27" cy="57" r="8" fill="rgba(255,130,130,.28)"/>
-      <circle cx="73" cy="57" r="8" fill="rgba(255,130,130,.28)"/>
-      <path d="M29 33 Q35 29 41 32" stroke="#7B5130" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-      <path d="M59 32 Q65 29 71 33" stroke="#7B5130" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    <!-- 타이틀 캐릭터: 진한 갈색 원통형, 얼굴 구분 없음 -->
+    <svg width="128" height="128" viewBox="0 0 100 110">
+      <ellipse cx="50" cy="104" rx="30" ry="8" fill="rgba(0,0,0,.25)"/>
+      <!-- 몸통 (진한 갈색) -->
+      <path d="M16,110 L16,38 Q16,8 50,8 Q84,8 84,38 L84,110 Z" fill="#6B3A18"/>
+      <!-- 왼쪽 하이라이트 -->
+      <path d="M19,105 Q18,62 20,38 Q27,14 50,11" stroke="rgba(170,90,40,.32)" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <!-- 오른쪽 그림자 -->
+      <path d="M81,105 Q82,62 80,38 Q73,14 50,11" stroke="rgba(0,0,0,.22)" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <!-- 눈 -->
+      <circle cx="37" cy="52" r="6" fill="#1a1a2e"/>
+      <circle cx="39" cy="50" r="2" fill="white"/>
+      <circle cx="63" cy="52" r="6" fill="#1a1a2e"/>
+      <circle cx="65" cy="50" r="2" fill="white"/>
+      <!-- 핑크 코 -->
+      <circle cx="50" cy="67" r="9" fill="#F87898"/>
+      <circle cx="47" cy="64" r="3" fill="rgba(255,255,255,.45)"/>
     </svg>
   </div>
   <button class="btn btn-gold" onclick="showLevels()">게임 시작 🎮</button>
@@ -304,21 +305,21 @@ let spawnInt=null, gameInt=null;
 
 // ── 두더지 SVG ──
 function moleSVG() {
-  return `<svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg">
-    <ellipse cx="50" cy="98" rx="25" ry="10" fill="#5C3210"/>
-    <rect x="25" y="58" width="50" height="44" rx="18" fill="#7B5130"/>
-    <ellipse cx="50" cy="48" rx="34" ry="36" fill="#C9975A"/>
-    <ellipse cx="50" cy="56" rx="22" ry="20" fill="#E0B888"/>
-    <circle cx="35" cy="43" r="6.5" fill="#1a1a2e"/>
-    <circle cx="37.5" cy="40.5" r="2.2" fill="white"/>
-    <circle cx="65" cy="43" r="6.5" fill="#1a1a2e"/>
-    <circle cx="67.5" cy="40.5" r="2.2" fill="white"/>
-    <circle cx="50" cy="57" r="6" fill="#E05252"/>
-    <circle cx="47.5" cy="54.5" r="2" fill="rgba(255,255,255,.4)"/>
-    <circle cx="27" cy="58" r="7.5" fill="rgba(255,130,130,.28)"/>
-    <circle cx="73" cy="58" r="7.5" fill="rgba(255,130,130,.28)"/>
-    <path d="M29 33 Q35 29 41 32" stroke="#7B5130" stroke-width="2" fill="none" stroke-linecap="round"/>
-    <path d="M59 32 Q65 29 71 33" stroke="#7B5130" stroke-width="2" fill="none" stroke-linecap="round"/>
+  return `<svg viewBox="0 0 100 128" xmlns="http://www.w3.org/2000/svg">
+    <!-- 진한 갈색 원통형 — 얼굴 구분 없음 -->
+    <path d="M16,128 L16,43 Q16,10 50,10 Q84,10 84,43 L84,128 Z" fill="#6B3A18"/>
+    <!-- 왼쪽 하이라이트 -->
+    <path d="M19,120 Q18,70 20,42 Q27,17 50,13" stroke="rgba(170,90,40,.3)" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <!-- 오른쪽 그림자 -->
+    <path d="M81,120 Q82,70 80,42 Q73,17 50,13" stroke="rgba(0,0,0,.2)" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <!-- 눈 (몸통에 바로) -->
+    <circle cx="37" cy="60" r="5" fill="#1a1a2e"/>
+    <circle cx="38.8" cy="58.3" r="1.7" fill="white"/>
+    <circle cx="63" cy="60" r="5" fill="#1a1a2e"/>
+    <circle cx="64.8" cy="58.3" r="1.7" fill="white"/>
+    <!-- 핑크 코 (몸통에 바로) -->
+    <circle cx="50" cy="74" r="8" fill="#F87898"/>
+    <circle cx="47" cy="71" r="2.8" fill="rgba(255,255,255,.45)"/>
   </svg>`;
 }
 
