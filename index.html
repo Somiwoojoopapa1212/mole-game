@@ -666,7 +666,13 @@ function replayLevel() { startCountdown(curLv); }
 pickTheme();
 </script>
 <script>
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+    // 새 서비스 워커가 제어권을 가져오면 자동 새로고침
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload();
+    });
+  }
 </script>
 </body>
 </html>
