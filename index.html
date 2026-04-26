@@ -484,6 +484,28 @@ function bombSVG() {
   </svg>`;
 }
 
+function painSVG() {
+  return `<svg viewBox="0 0 100 128" xmlns="http://www.w3.org/2000/svg">
+    <!-- 몸통 (충격으로 살짝 밝아짐) -->
+    <path d="M16,128 L16,43 Q16,10 50,10 Q84,10 84,43 L84,128 Z" fill="#8B4520"/>
+    <path d="M19,120 Q18,70 20,42 Q27,17 50,13" stroke="rgba(200,110,50,.35)" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M81,120 Q82,70 80,42 Q73,17 50,13" stroke="rgba(0,0,0,.2)" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <!-- X 눈 -->
+    <line x1="31" y1="54" x2="43" y2="66" stroke="white" stroke-width="4" stroke-linecap="round"/>
+    <line x1="43" y1="54" x2="31" y2="66" stroke="white" stroke-width="4" stroke-linecap="round"/>
+    <line x1="57" y1="54" x2="69" y2="66" stroke="white" stroke-width="4" stroke-linecap="round"/>
+    <line x1="69" y1="54" x2="57" y2="66" stroke="white" stroke-width="4" stroke-linecap="round"/>
+    <!-- 빨개진 코 -->
+    <circle cx="50" cy="74" r="8" fill="#FF5060"/>
+    <!-- 찡그린 입 (물결 모양) -->
+    <path d="M37,87 Q43,82 50,87 Q57,92 63,87" stroke="rgba(255,255,255,.8)" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+    <!-- 충격 별 (어지러움) -->
+    <text x="13" y="47" font-size="14" fill="#FFD700" opacity=".95">★</text>
+    <text x="75" y="43" font-size="12" fill="#FFD700" opacity=".85">★</text>
+    <text x="22" y="33" font-size="9"  fill="#FFD700" opacity=".7" >★</text>
+  </svg>`;
+}
+
 // ── 그리드 생성 ──
 function buildGrid() {
   const g = document.getElementById('hole-grid');
@@ -578,7 +600,6 @@ function whack(i) {
   clearTimeout(tmrs[i]);
   states[i]='whacked';
   bombBadges[i].classList.remove('show');
-  moles[i].classList.remove('up'); moles[i].classList.add('down');
 
   const isBomb = moleTypes[i]==='bomb';
   const pts = CFG[curLv].pts;
@@ -586,11 +607,15 @@ function whack(i) {
   fx.className='h-fx'; fl.className='h-flash'; bfl.className='h-bomb-flash'; void fx.offsetWidth;
 
   if (isBomb) {
+    moles[i].classList.remove('up'); moles[i].classList.add('down');
     playBombHit();
     score = Math.max(0, score - pts);
     fx.textContent='💥';
     bfl.classList.add('show');
   } else {
+    // 찡그리는 표정을 잠깐 보여준 뒤 내려감
+    moles[i].innerHTML = painSVG();
+    setTimeout(() => { moles[i].classList.remove('up'); moles[i].classList.add('down'); }, 90);
     playHit();
     score += pts;
     fx.textContent='🔨';
@@ -609,7 +634,7 @@ function whack(i) {
     moles[i].className='mole'; moles[i].innerHTML=moleSVG();
     states[i]='idle'; moleTypes[i]='normal';
     fx.className='h-fx'; fl.className='h-flash'; bfl.className='h-bomb-flash';
-  }, 380);
+  }, 460);
 }
 
 // ── 게임 종료 ──
