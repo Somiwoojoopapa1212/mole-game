@@ -245,6 +245,40 @@
 </div>
 
 <script>
+// ── 오디오 ──
+let _audioCtx = null;
+function _getCtx() {
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return _audioCtx;
+}
+function playHit() {
+  try {
+    const ctx = _getCtx();
+    const now = ctx.currentTime;
+    // 저음 둔탁한 타격 (쾅!)
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(140, now);
+    osc.frequency.exponentialRampToValueAtTime(36, now + 0.13);
+    gain.gain.setValueAtTime(1.5, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(now); osc.stop(now + 0.18);
+    // 충격 잡음 (딱! 느낌)
+    const bLen = Math.floor(ctx.sampleRate * 0.065);
+    const buf  = ctx.createBuffer(1, bLen, ctx.sampleRate);
+    const d    = buf.getChannelData(0);
+    for (let k = 0; k < bLen; k++) d[k] = (Math.random()*2-1) * Math.exp(-k / (ctx.sampleRate * 0.016));
+    const ns = ctx.createBufferSource();
+    const ng = ctx.createGain();
+    ns.buffer = buf;
+    ng.gain.setValueAtTime(0.9, now);
+    ns.connect(ng); ng.connect(ctx.destination);
+    ns.start(now);
+  } catch(e) {}
+}
+
 // ── 레벨 설정 ──
 // upT: 두더지 올라와 있는 시간(ms), popT: 내려가는 속도(ms)
 // max: 동시 최대 두더지 수, spawnT: 스폰 간격(ms)
@@ -422,6 +456,8 @@ function whack(i) {
   clearTimeout(tmrs[i]);
   states[i]='whacked';
   moles[i].classList.remove('up'); moles[i].classList.add('down');
+
+  playHit();
 
   const pts = CFG[curLv].pts;
   score += pts;
