@@ -4,11 +4,11 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-title" content="두더지 게임"/>
+  <meta name="apple-mobile-web-app-title" content="Woojoo's 두더지게임"/>
   <link rel="manifest" href="manifest.json"/>
   <meta name="theme-color" content="#6B3A18"/>
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png"/>
-  <title>두더지 게임!</title>
+  <title>Woojoo's 두더지게임</title>
   <style>
     :root {
       --sky:#5BA3DC; --grass:#5A9E2F; --dirt:#8B5E2D;
@@ -199,7 +199,7 @@
 
 <!-- ══ TITLE ══ -->
 <div id="s-title" class="screen active">
-  <div class="t-h1">두더지 게임!</div>
+  <div class="t-h1"><span style="font-size:.58em;display:block;opacity:.9">Woojoo's</span>두더지게임!</div>
   <div class="t-sub">Whack-a-Mole · 11 Levels</div>
   <div class="t-char">
     <!-- 타이틀 캐릭터: 진한 갈색 원통형, 얼굴 구분 없음 -->
@@ -345,6 +345,40 @@ function playHit() {
   } catch(e) {}
 }
 
+function playCountTick() {
+  try {
+    const ctx = _getCtx();
+    const now = ctx.currentTime;
+    // 맑고 높은 틱 소리
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(920, now);
+    osc.frequency.exponentialRampToValueAtTime(650, now + 0.1);
+    gain.gain.setValueAtTime(1.0, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.14);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(now); osc.stop(now + 0.14);
+  } catch(e) {}
+}
+function playCountGo() {
+  try {
+    const ctx = _getCtx();
+    const now = ctx.currentTime;
+    // 두 음이 연속으로 올라가는 GO! 사운드
+    [[523, 0], [784, 0.1]].forEach(([freq, delay]) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.9, now + delay);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + delay + 0.28);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(now + delay); osc.stop(now + delay + 0.3);
+    });
+  } catch(e) {}
+}
+
 function playBombHit() {
   try {
     const ctx = _getCtx();
@@ -431,8 +465,8 @@ function startCountdown(lv) {
   let n = 3;
   const tick = () => {
     el.className=''; void el.offsetWidth;
-    if (n > 0) { el.textContent=n; el.className='cd-n'; n--; setTimeout(tick,900); }
-    else { el.textContent='GO!'; el.className='cd-g'; setTimeout(startGame,800); }
+    if (n > 0) { el.textContent=n; el.className='cd-n'; playCountTick(); n--; setTimeout(tick,900); }
+    else { el.textContent='GO!'; el.className='cd-g'; playCountGo(); setTimeout(startGame,800); }
   };
   tick();
 }
