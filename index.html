@@ -154,6 +154,29 @@
       100% { width:90px; height:90px; opacity:0; transform:translateX(-50%) translateY(-50%); }
     }
 
+    /* 폭탄 두더지 빨간 플래시 */
+    .h-bomb-flash {
+      position:absolute; top:15%; left:50%; transform:translateX(-50%) translateY(-50%);
+      width:0; height:0; border-radius:50%;
+      background:radial-gradient(circle, rgba(255,60,60,.95) 0%, rgba(200,0,0,.45) 60%, transparent 100%);
+      z-index:9; pointer-events:none;
+    }
+    .h-bomb-flash.show { animation:flashBurst .32s ease-out forwards; }
+    /* 폭탄 두더지 💣 뱃지 */
+    .h-bomb-badge {
+      position:absolute; top:-4%; left:50%; transform:translateX(-50%);
+      font-size:20px; z-index:8; pointer-events:none;
+      display:none;
+    }
+    .h-bomb-badge.show {
+      display:block;
+      animation:bombFloat .55s ease-in-out infinite alternate;
+    }
+    @keyframes bombFloat {
+      from { transform:translateX(-50%) translateY(0); }
+      to   { transform:translateX(-50%) translateY(-5px); }
+    }
+
     /* ══ RESULT ══ */
     #s-result { background:linear-gradient(160deg,#100600,#200c00); padding:28px 22px; gap:0; }
     .res-emoji  { font-size:68px; margin-bottom:8px; }
@@ -279,6 +302,22 @@ function playHit() {
   } catch(e) {}
 }
 
+function playBombHit() {
+  try {
+    const ctx = _getCtx();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(300, now);
+    osc.frequency.exponentialRampToValueAtTime(70, now + 0.38);
+    gain.gain.setValueAtTime(0.55, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.38);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(now); osc.stop(now + 0.38);
+  } catch(e) {}
+}
+
 // ── 레벨 설정 ──
 // upT: 두더지 올라와 있는 시간(ms), popT: 내려가는 속도(ms)
 // max: 동시 최대 두더지 수, spawnT: 스폰 간격(ms)
@@ -356,7 +395,7 @@ function startCountdown(lv) {
 
 // ── 게임 상태 ──
 let score=0, timeLeft=SECS, tgtDone=false;
-let states=[], moles=[], fxEls=[], flEls=[], tmrs=[];
+let states=[], moleTypes=[], moles=[], fxEls=[], flEls=[], bombFlEls=[], bombBadges=[], tmrs=[];
 let spawnInt=null, gameInt=null;
 
 // ── 두더지 SVG ──
@@ -379,25 +418,53 @@ function moleSVG() {
   </svg>`;
 }
 
+function bombSVG() {
+  return `<svg viewBox="0 0 100 128" xmlns="http://www.w3.org/2000/svg">
+    <path d="M16,128 L16,43 Q16,10 50,10 Q84,10 84,43 L84,128 Z" fill="#3A0A0A"/>
+    <path d="M19,120 Q18,70 20,42 Q27,17 50,13" stroke="rgba(200,60,60,.3)" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M81,120 Q82,70 80,42 Q73,17 50,13" stroke="rgba(0,0,0,.3)" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <!-- 화난 눈썹 -->
+    <line x1="29" y1="51" x2="44" y2="56" stroke="#FF3333" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="71" y1="51" x2="56" y2="56" stroke="#FF3333" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- 빨간 눈 -->
+    <circle cx="37" cy="62" r="6" fill="#CC0000"/>
+    <circle cx="39.5" cy="59.5" r="2.2" fill="#FF6666"/>
+    <circle cx="63" cy="62" r="6" fill="#CC0000"/>
+    <circle cx="65.5" cy="59.5" r="2.2" fill="#FF6666"/>
+    <!-- 코 -->
+    <circle cx="50" cy="76" r="7.5" fill="#880000"/>
+    <!-- 이빨 드러낸 입 -->
+    <path d="M35,88 Q50,96 65,88" stroke="#FF3333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <rect x="43" y="88" width="5" height="5" rx="1" fill="white"/>
+    <rect x="52" y="88" width="5" height="5" rx="1" fill="white"/>
+  </svg>`;
+}
+
 // ── 그리드 생성 ──
 function buildGrid() {
   const g = document.getElementById('hole-grid');
-  g.innerHTML=''; states=[]; moles=[]; fxEls=[]; flEls=[]; tmrs=Array(NHOLES).fill(null);
+  g.innerHTML=''; states=[]; moleTypes=[]; moles=[]; fxEls=[]; flEls=[]; bombFlEls=[]; bombBadges=[];
+  tmrs=Array(NHOLES).fill(null);
   for (let i=0; i<NHOLES; i++) {
     const cell = document.createElement('div');
     cell.className='hole-cell';
     cell.innerHTML=`<div class="h-ground"></div>
       <div class="h-clip"><div class="mole" id="m${i}">${moleSVG()}</div></div>
       <div class="h-hole"></div>
-      <div class="h-flash" id="fl${i}"></div>
-      <div class="h-fx"    id="fx${i}"></div>`;
+      <div class="h-flash"      id="fl${i}"></div>
+      <div class="h-bomb-flash" id="bfl${i}"></div>
+      <div class="h-bomb-badge" id="bb${i}">💣</div>
+      <div class="h-fx"         id="fx${i}"></div>`;
     cell.addEventListener('click', ()=>whack(i));
     cell.addEventListener('touchstart', e=>{e.preventDefault();whack(i);},{passive:false});
     g.appendChild(cell);
     states.push('idle');
+    moleTypes.push('normal');
     moles.push(document.getElementById(`m${i}`));
     fxEls.push(document.getElementById(`fx${i}`));
     flEls.push(document.getElementById(`fl${i}`));
+    bombFlEls.push(document.getElementById(`bfl${i}`));
+    bombBadges.push(document.getElementById(`bb${i}`));
   }
 }
 
@@ -434,10 +501,20 @@ function startGame() {
 }
 
 // ── 두더지 올리기/내리기 ──
+function bombChance() {
+  if (curLv < 4)  return 0;
+  if (curLv <= 6) return 0.15;
+  if (curLv <= 10) return 0.20;
+  return 0.25;
+}
 function rise(i) {
   if (states[i]!=='idle') return;
+  const isBomb = Math.random() < bombChance();
+  moleTypes[i] = isBomb ? 'bomb' : 'normal';
   states[i]='up';
+  moles[i].innerHTML = isBomb ? bombSVG() : moleSVG();
   moles[i].className='mole';
+  if (isBomb) bombBadges[i].classList.add('show');
   requestAnimationFrame(()=>requestAnimationFrame(()=>moles[i].classList.add('up')));
   const dur = CFG[curLv].upT + (Math.random()*400-200);
   tmrs[i] = setTimeout(()=>lower(i), dur);
@@ -446,8 +523,9 @@ function lower(i) {
   if (states[i]!=='up') return;
   clearTimeout(tmrs[i]);
   states[i]='falling';
+  bombBadges[i].classList.remove('show');
   moles[i].classList.remove('up'); moles[i].classList.add('down');
-  setTimeout(()=>{ moles[i].className='mole'; states[i]='idle'; }, CFG[curLv].popT);
+  setTimeout(()=>{ moles[i].className='mole'; moles[i].innerHTML=moleSVG(); states[i]='idle'; moleTypes[i]='normal'; }, CFG[curLv].popT);
 }
 
 // ── 두더지 잡기 ──
@@ -455,12 +533,26 @@ function whack(i) {
   if (states[i]!=='up') return;
   clearTimeout(tmrs[i]);
   states[i]='whacked';
+  bombBadges[i].classList.remove('show');
   moles[i].classList.remove('up'); moles[i].classList.add('down');
 
-  playHit();
-
+  const isBomb = moleTypes[i]==='bomb';
   const pts = CFG[curLv].pts;
-  score += pts;
+  const fx=fxEls[i], fl=flEls[i], bfl=bombFlEls[i];
+  fx.className='h-fx'; fl.className='h-flash'; bfl.className='h-bomb-flash'; void fx.offsetWidth;
+
+  if (isBomb) {
+    playBombHit();
+    score = Math.max(0, score - pts);
+    fx.textContent='💥';
+    bfl.classList.add('show');
+  } else {
+    playHit();
+    score += pts;
+    fx.textContent='🔨';
+    fl.classList.add('show');
+  }
+  fx.classList.add('show');
   document.getElementById('hud-sc').textContent = score;
 
   // 목표 바 업데이트
@@ -469,14 +561,11 @@ function whack(i) {
   tf.style.width=pct+'%';
   if (score>=c.tgt && !tgtDone) { tgtDone=true; tf.classList.add('done'); }
 
-  // 망치 타격 이펙트
-  const fx=fxEls[i], fl=flEls[i];
-  fx.className='h-fx'; fl.className='h-flash'; void fx.offsetWidth;
-  fx.textContent = '🔨';
-  fx.classList.add('show');
-  fl.classList.add('show');
-
-  setTimeout(()=>{ moles[i].className='mole'; states[i]='idle'; fx.className='h-fx'; fl.className='h-flash'; }, 380);
+  setTimeout(()=>{
+    moles[i].className='mole'; moles[i].innerHTML=moleSVG();
+    states[i]='idle'; moleTypes[i]='normal';
+    fx.className='h-fx'; fl.className='h-flash'; bfl.className='h-bomb-flash';
+  }, 380);
 }
 
 // ── 게임 종료 ──
